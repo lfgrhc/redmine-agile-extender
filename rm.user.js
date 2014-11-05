@@ -3,37 +3,35 @@
 // @namespace   rm
 // @description rm agile extender
 // @include     http://dev.citystar.ru:8080/projects/*/agile/*
-// @version     1
+// @version     1.1
 // @grant       none
 // ==/UserScript==
 
 $(function () {
-    // элементы для контента
     $("body").append("<div id='context-menu' style='display:none;'></div>");
-
-    // СЛАЙДЕР
     $('.issue-card').each(function () {
-        var v = $(this).find('td.closed').length ? parseInt($(this).find('.closed')[0].style.width || 0) : 0;
         var id = parseInt($(this).attr("data-id"));
         $(this).addClass("hascontextmenu")
-            .append("<div class='slider'></div>\
-                <div class='quick-view' data-load='/issues/" + id + " .description .wiki'>\
-                    <div class='quick-view-content'>загрузка...</div>\
-                </div>\
-                <div class='quick-view quick-view-comments' data-load='/issues/" + id + " #history'>\
-                    <div class='quick-view-content'>загрузка...</div>\
-                </div>")
-            .find('.slider').slider({
-                value: v,
-                min: 0,
-                max: 100,
-                step: 10,
-                range: "min",
-                change: function (event, ui) {
-                    if (ui.value == v) return false;
-                    $.post("/issues/bulk_update?back_url=/&ids[]=" + id + "&issue[done_ratio]=" + ui.value);
-                }
-            });
+            .append("<div class='quick-view' data-load='/issues/" + id + " .description .wiki'>\
+                <div class='quick-view-content'>загрузка...</div></div>\
+            <div class='quick-view quick-view-comments' data-load='/issues/" + id + " #history'>\
+                <div class='quick-view-content'>загрузка...</div></div>");
+        
+        if($(this).find('td.closed').length || $(this).find('td.todo').length){
+            var v = $(this).find('.closed').length ? (parseInt($(this).find('.closed')[0].style.width) || 0) : 0;
+            $(this).append("<div class='slider'></div>")
+                .find('.slider').slider({
+                    value: v,
+                    min: 0,
+                    max: 100,
+                    step: 10,
+                    range: "min",
+                    change: function (event, ui) {
+                        if (ui.value == v) return false;
+                        $.post("/issues/bulk_update?back_url=/&ids[]=" + id + "&issue[done_ratio]=" + ui.value);
+                    }
+                });
+        }
     });
 
     $('.quick-view').click(function () {
@@ -46,8 +44,8 @@ $(function () {
         }
     });
     $('.quick-view').on("click", ".quick-view-close", function (event) {
-        event.preventDefault();//
-        event.stopPropagation();//
+        event.preventDefault();
+        event.stopPropagation();
         $(this).parent().parent().removeClass('ready');
         $(this).parent().html('загрузка...');
     });
@@ -58,29 +56,27 @@ $(function () {
         $('#query_form_with_buttons').slideToggle(100);
     });
 
-    // редмайновское контекстное меню
-    contextMenuInit('/issues/context_menu');//
+    // redmine context menu
+    contextMenuInit('/issues/context_menu');
 
-    // СТИЛИ
+    // styles
     $('body').append("<style>\
-.ui-slider {margin-top:15px;}\
+.controller-agile_boards .ui-slider { margin:20px -6px -6px -6px; }\
 .ui-slider .ui-slider-handle { \
     width:8px;height:8px;border-radius:50%;background:#cc9;box-shadow:0 0 0 2px #fff;\
     border:none;margin-left:-4px;margin-top:2px;display:none;cursor:pointer; \
 }\
+.ui-slider .ui-slider-handle:hover { transform:scale(1.5);}\
 .issue-card:hover .ui-slider .ui-slider-handle{display:block;}\
-.ui-slider .ui-slider-handle:hover { transform:scale(1.4);}\
 .ui-slider-horizontal { border-radius:0;border:none;height:5px;background:none;}\
-\
-.issue-card { position:relative;}\
-.issue-card .progress { display:none;}\
 .ui-slider-range { background:#eea;}\
 \
-#query_form_with_buttons { display:none; }\
-.controller-agile_boards #sidebar { display:none;}\
+\
+#footer,.issue-card .progress, #query_form_with_buttons, .controller-agile_boards #sidebar { \
+    display:none;\
+}\
+\
 .controller-agile_boards  #content { width:98%;box-sizind:border-box;margin:0;border:0;padding:1%; }\
-.controller-agile_boards .ui-slider { margin:20px -6px -6px -6px; }\
-.controller-agile_boards { }\
 \
 .quick-view { \
     opacity:.5;position:absolute;top:5px;left:100%;margin-left:5px;cursor:pointer; \
@@ -97,32 +93,27 @@ $(function () {
 .quick-view-close { position:absolute;top:2px;right:2px;color:#444; \
     text-shadow:1px 1px 0 #fff;font-size:18px; \
 } \
-\
-.quick-view textarea,\
-.quick-view input[type=text] { \
+.quick-view textarea, .quick-view input[type=text] { \
     border:1px solid #ccc;background:#fff;box-sizing:border-box;\
     width:100%;margin:10px 0;\
 } \
-\
 .quick-view-close img { transform:rotate(0deg);transition:.2s; } \
 .quick-view-close:hover img { transform:rotate(180deg);transition:.2s; }\
-\
 .quick-view .quick-view-content { \
     position:absolute;display:none; left:-100px;top:10px;background:#fff; \
     border:1px solid #ccc;color:#555;width:400px;height:auto; \
     padding:10px;z-index:100;box-shadow:0 2px 3px rgba(0,0,0,.2);overflow:visible; \
-}\
+} \
 .quick-view.ready .quick-view-content { display:block; } \
 \
-div.agile-board.autoscroll { overflow:visible !important; }\
+div.agile-board.autoscroll { overflow:visible !important; } \
 \
-.issue-card { border:1px solid #eea;}\
-.issue-card * { font-family:Open Sans;font-weight:400;font-size:13px;}\
-.issue-id { color:#cc9;}\
+.issue-card { position:relative;border:1px solid #eea; } \
+.issue-card * { font-weight:400;font-size:13px; } \
+.issue-id { color:#cc9; }\
 \
-table.list{ border:none;}\
-#footer{ display:none;}\
-table.list th{ background:none;color:#ddd;font-family:Open Sans;font-size:18px;font-weight:100; }\
+table.list{ border:none; }\
+table.list th{ background:none;color:#ddd;font-size:18px;font-weight:100; } \
 </style>");
 
 });
@@ -139,7 +130,7 @@ var ctxParams = {
 };
 
 function contextMenuInit(url) {
-    if (contextMenuObserving) return;//
+    if (contextMenuObserving) return;
     contextMenuUrl = url;
     $(document).click(contextMenuClick);
     $(document).contextmenu(function(event){
@@ -202,8 +193,7 @@ function contextMenuShow(event) {
 }
 
 function window_size() {
-    var w;
-    var h;
+    var w, h;
     if (window.innerWidth) {
         w = window.innerWidth;
         h = window.innerHeight;
