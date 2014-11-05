@@ -12,9 +12,11 @@ $(function () {
     $('.issue-card').each(function () {
         var id = parseInt($(this).attr("data-id"));
         $(this).addClass("hascontextmenu")
-            .append("<div class='quick-view' data-load='/issues/" + id + " .description .wiki'>\
+            .append("<div class='quick-view' data-load='/issues/" + id + " .description .wiki,.attachments'>\
                 <div class='quick-view-content'>загрузка...</div></div>\
             <div class='quick-view quick-view-comments' data-load='/issues/" + id + " #history'>\
+                <div class='quick-view-content'>загрузка...</div></div>\
+            <div class='quick-view quick-view-update' data-load='/issues/" + id + " #update'>\
                 <div class='quick-view-content'>загрузка...</div></div>");
         
         if($(this).find('td.closed').length || $(this).find('td.todo').length){
@@ -48,8 +50,30 @@ $(function () {
         event.stopPropagation();
         $(this).parent().parent().removeClass('ready');
         $(this).parent().html('загрузка...');
+    }).on("click", "*", function (event) {
+        $(this).trigger("focus");
     });
     
+ 
+    $('.quick-view').on("mouseover", ".icon-attachment", function () {
+       var href =  $(this).attr("href");
+       if(!/\.(png|jpg|jpeg|gif|bmp)$/i.test(href)) return false;
+       if(!$(this).find("img").length)
+            $(this).append("<img src='" + href + "'/>");
+       $(this).find("img").fadeIn(100);
+    }).on("mouseout", ".icon-attachment", function () {
+        if($(this).find("img").length)
+            $(this).find("img").fadeOut(100);
+    }).on('mousewheel DOMMouseScroll', ".icon-attachment", function(event){
+        if(!$(this).find("img").length) return;
+        event.stopPropagation();
+        event.preventDefault();
+        var d = (event.originalEvent.wheelDelta > 0 || event.originalEvent.detail < 0) ? 20 : -20;
+        $(this).find("img").css({
+            "width": "+=" + d
+        });
+    });
+      
     $('.quick-view-content').draggable({ });
     
     $('#content > h2').click(function () {
@@ -57,7 +81,7 @@ $(function () {
     });
 
     // redmine context menu
-    contextMenuInit('/issues/context_menu');
+    contextMenuInit();
 
     // styles
     $('body').append("<style>\
@@ -88,8 +112,17 @@ $(function () {
 .quick-view-comments { width:16px;height:16px;top:20px;margin-left:4px;border:none; }\
 .quick-view-comments:before {\
     box-shadow: 1px 1px 0 #7e7e48,2px 1px 0 #7e7e48,3px 1px 0 #7e7e48,4px 1px 0 #7e7e48,5px 1px 0 #7e7e48,6px 1px 0 #7e7e48,7px 1px 0 #7e7e48,8px 1px 0 #7e7e48,1px 2px 0 #7e7e48,8px 2px 0 #7e7e48,1px 3px 0 #7e7e48,3px 3px 0 #7e7e48,4px 3px 0 #7e7e48,5px 3px 0 #7e7e48,6px 3px 0 #7e7e48,8px 3px 0 #7e7e48,1px 4px 0 #7e7e48,8px 4px 0 #7e7e48,1px 5px 0 #7e7e48,4px 5px 0 #7e7e48,5px 5px 0 #7e7e48,6px 5px 0 #7e7e48,7px 5px 0 #7e7e48,8px 5px 0 #7e7e48,1px 6px 0 #7e7e48,3px 6px 0 #7e7e48,1px 7px 0 #7e7e48,2px 7px 0 #7e7e48,1px 8px 0 #7e7e48;\
-   display:block;content:\"\";width:1px;height:1px;\
+    display:block;content:\"\";width:1px;height:1px;\
 } \
+\
+.quick-view-update { width:16px;height:16px;top:37px;margin-left:4px;border:none; }\
+.quick-view-update:before {\
+    box-shadow: 4px 1px 0 #7E7E48,5px 1px 0 #7E7E48,4px 2px 0 #7E7E48,5px 2px 0 #7E7E48,4px 3px 0 #7E7E48,5px 3px 0 #7E7E48,1px 4px 0 #7E7E48,2px 4px 0 #7E7E48,3px 4px 0 #7E7E48,4px 4px 0 #7E7E48,5px 4px 0 #7E7E48,6px 4px 0 #7E7E48,7px 4px 0 #7E7E48,8px 4px 0 #7E7E48,1px 5px 0 #7E7E48,2px 5px 0 #7E7E48,3px 5px 0 #7E7E48,4px 5px 0 #7E7E48,5px 5px 0 #7E7E48,6px 5px 0 #7E7E48,7px 5px 0 #7E7E48,8px 5px 0 #7E7E48,4px 6px 0 #7E7E48,5px 6px 0 #7E7E48,4px 7px 0 #7E7E48,5px 7px 0 #7E7E48,4px 8px 0 #7E7E48,5px 8px 0 #7E7E48;\
+    display:block;content:\"\";width:1px;height:1px;\
+} \
+.quick-view-update #update { display:block !important; }\
+.quick-view-update .tabular { display:none !important; }\
+\
 .quick-view-close { position:absolute;top:2px;right:2px;color:#444; \
     text-shadow:1px 1px 0 #fff;font-size:18px; \
 } \
@@ -100,9 +133,9 @@ $(function () {
 .quick-view-close img { transform:rotate(0deg);transition:.2s; } \
 .quick-view-close:hover img { transform:rotate(180deg);transition:.2s; }\
 .quick-view .quick-view-content { \
-    position:absolute;display:none; left:-100px;top:10px;background:#fff; \
-    border:1px solid #ccc;color:#555;width:400px;height:auto; \
-    padding:10px;z-index:100;box-shadow:0 2px 3px rgba(0,0,0,.2);overflow:visible; \
+    position:absolute;display:none; left:-200px;top:10px;background:#fff; \
+    border:1px solid #ccc;color:#555;width:500px;height:auto; \
+    padding:15px 15px 30px 15px;z-index:100;box-shadow:0 2px 3px rgba(0,0,0,.2);overflow:visible; \
 } \
 .quick-view.ready .quick-view-content { display:block; } \
 \
@@ -114,6 +147,12 @@ div.agile-board.autoscroll { overflow:visible !important; } \
 \
 table.list{ border:none; }\
 table.list th{ background:none;color:#ddd;font-size:18px;font-weight:100; } \
+\
+.icon-attachment { position:relative; } \
+.icon-attachment img { position:absolute;right:110%;top:-10px;width:180px; \
+    border:5px solid #fff;box-shadow:0 3px 3px 4px rgba(0,0,0,.2);display:none; \
+} \
+\
 </style>");
 
 });
@@ -121,7 +160,7 @@ table.list th{ background:none;color:#ddd;font-size:18px;font-weight:100; } \
 
 
 var contextMenuObserving;
-var contextMenuUrl;
+var contextMenuUrl = '/issues/context_menu';
 var ctxParams = {
     authenticity_token: $("input[name='authenticity_token']").val(),
     back_url: "/",
@@ -129,83 +168,46 @@ var ctxParams = {
     utf8: ""
 };
 
-function contextMenuInit(url) {
+function contextMenuInit() {
     if (contextMenuObserving) return;
-    contextMenuUrl = url;
-    $(document).click(contextMenuClick);
+    $(document).click(function(){
+       $('#context-menu').hide();
+    });
     $(document).contextmenu(function(event){
         var el = $(event.target).hasClass('issue-card') ? $(event.target) : $(event.target).closest('.issue-card');
         if (!el.hasClass('hascontextmenu')) return;
         ctxParams.ids = [+el.attr("data-id")];
         event.preventDefault();
-        contextMenuShow(event);
+        
+        var x = event.pageX,
+            y = event.pageY;
+
+        $('#context-menu').css({
+            left: x + 'px',
+            top: y + 'px'
+        }).empty().removeClass('reverse-y');
+
+        $.ajax({
+            url: contextMenuUrl,
+            data: $.param(ctxParams),
+            success: function (data, textStatus, jqXHR) {
+                $('#context-menu').html(data);
+                var menu_width = $('#context-menu').width(),
+                    menu_height = $('#context-menu').height();
+                if (x + 2 * menu_width > $(window).width())
+                    x -= menu_width, $('#context-menu').addClass('reverse-x');
+                else
+                    $('#context-menu').removeClass('reverse-x');
+
+                if (y + menu_height > $(window).height())
+                    y -= menu_height, $('#context-menu').addClass('reverse-y');
+                $('#context-menu').css({
+                    'left': (x ? x : 1) + 'px',
+                    'top': (y ? y : 1) + 'px'
+                }).show();
+
+            }
+        });
     });
     contextMenuObserving = true;
-}
-
-function contextMenuClick(event) {
-    $('#context-menu').hide();
-}
-
-function contextMenuShow(event) {
-    var mouse_x = event.pageX,
-        mouse_y = event.pageY,
-        render_x = mouse_x,
-        render_y = mouse_y;
-    var menu_width, menu_height;
-
-    $('#context-menu').css({
-        'left': (render_x + 'px'),
-        'top': (render_y + 'px')
-    }).html('');
-
-    $.ajax({
-        url: contextMenuUrl,
-        data: $.param(ctxParams),
-        success: function (data, textStatus, jqXHR) {
-            $('#context-menu').html(data);
-            menu_width = $('#context-menu').width();
-            menu_height = $('#context-menu').height();
-
-            var ws = window_size();
-
-            if (mouse_x + 2 * menu_width > ws.width) {
-                render_x -= menu_width;
-                $('#context-menu').addClass('reverse-x');
-            } else {
-                $('#context-menu').removeClass('reverse-x');
-            }
-            if (mouse_y + menu_height > ws.height) {
-                render_y -= menu_height;
-                $('#context-menu').addClass('reverse-y');
-            } else {
-                $('#context-menu').removeClass('reverse-y');
-            }
-            if (render_x <= 0) render_x = 1;
-            if (render_y <= 0) render_y = 1;
-            $('#context-menu').css({
-                'left': (render_x + 'px'),
-                'top': (render_y + 'px')
-            }).show();
-
-        }
-    });
-}
-
-function window_size() {
-    var w, h;
-    if (window.innerWidth) {
-        w = window.innerWidth;
-        h = window.innerHeight;
-    } else if (document.documentElement) {
-        w = document.documentElement.clientWidth;
-        h = document.documentElement.clientHeight;
-    } else {
-        w = document.body.clientWidth;
-        h = document.body.clientHeight;
-    }
-    return {
-        width: w,
-        height: h
-    };
 }
