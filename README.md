@@ -11,3 +11,11 @@ Extend the default-functionality of redmine agile plugin:
 Changing styles:
 - full-width issues-board;
 - dark yellow progress bar on bottom.
+
+Instalation
+======================
+
+Just include rm.user.js only on the agile-board page:
+<script src="rm.user.js"></script>
+
+Or you can use GreaseMonkey Firefox plugin for it (or its analog for other browsers).
