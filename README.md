@@ -15,7 +15,6 @@ Changing styles:
 Instalation
 ======================
 
-Just include rm.user.js only on the agile-board page:
-<script src="rm.user.js"></script>
+Just include rm.user.js only on the agile-board page: &lt;script src="rm.user.js"></script>
 
 Or you can use GreaseMonkey Firefox plugin for it (or its analog for other browsers).
