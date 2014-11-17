@@ -136,7 +136,7 @@ function main() {
 
     // styles
     $('body').append("<style>\
-	.controller-agile_boards .ui-slider { margin:20px -6px -6px -6px; }\
+	.controller-agile_boards .ui-slider { margin:6px -6px -6px -6px; }\
 	.ui-slider .ui-slider-handle { \
 		width:8px;height:8px;border-radius:50%;background:#cc9;box-shadow:0 0 0 2px #fff;\
 		border:none;margin-left:-4px;margin-top:2px;display:none;cursor:pointer; \
